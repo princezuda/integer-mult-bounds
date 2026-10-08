@@ -397,6 +397,27 @@ theorem gaussian_cutoff (b : ℝ) (hb : (2 : ℝ) ^ 40 ≤ b) :
         gcongr
     _ = b / 4 := by ring
 
+/-- the note's general form (lines 94-95): for every `0 ≤ ε ≤ 1/5`, `b ≥ 2^40` implies
+`46 b^((1+3ε)/2) ≤ b/4`, since `(1+3ε)/2 ≤ 4/5` and `b^(1/5) ≥ 2^8 > 184` -/
+theorem gaussian_cutoff_general (ε b : ℝ) (hε0 : 0 ≤ ε) (hε : ε ≤ 1 / 5) (hb : (2 : ℝ) ^ 40 ≤ b) :
+    46 * b ^ ((1 + 3 * ε) / 2) ≤ b / 4 := by
+  have hb1 : (1 : ℝ) ≤ b := le_trans (by norm_num) hb
+  have hb0 : 0 < b := by linarith
+  have hle : b ^ ((1 + 3 * ε) / 2) ≤ b ^ ((4 : ℝ) / 5) :=
+    Real.rpow_le_rpow_of_exponent_le hb1 (by linarith)
+  have hsplit : b ^ ((4 : ℝ) / 5) = b / b ^ ((1 : ℝ) / 5) := by
+    rw [show (4 : ℝ) / 5 = 1 - 1 / 5 by norm_num, Real.rpow_sub hb0, Real.rpow_one]
+  have hX : (184 : ℝ) ≤ b ^ ((1 : ℝ) / 5) := by
+    have h1 : ((2 : ℝ) ^ 40) ^ ((1 : ℝ) / 5) ≤ b ^ ((1 : ℝ) / 5) :=
+      Real.rpow_le_rpow (by positivity) hb (by norm_num)
+    have h2 : ((2 : ℝ) ^ 40) ^ ((1 : ℝ) / 5) = 2 ^ (8 : ℕ) := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num), ← Real.rpow_natCast]; norm_num
+    rw [h2] at h1; norm_num at h1; linarith
+  have hXpos : 0 < b ^ ((1 : ℝ) / 5) := Real.rpow_pos_of_pos hb0 _
+  calc 46 * b ^ ((1 + 3 * ε) / 2) ≤ 46 * (b / b ^ ((1 : ℝ) / 5)) := by rw [← hsplit]; gcongr
+    _ ≤ 46 * (b / 184) := by gcongr
+    _ = b / 4 := by ring
+
 /-! ## G. The scoped ceiling for this complex network
 
 Their remark that no parameters reach `2^-33` with the `h = 25` complex motif and the
