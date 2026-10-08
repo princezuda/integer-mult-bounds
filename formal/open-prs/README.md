@@ -18,7 +18,7 @@ For every other PR, the certificate arithmetic is proved in Lean:
 |---|---|---|
 | #3 | 59/10¹¹ | `PRChecksA.PR3` |
 | #4 | 591/10¹² | `PRChecksA.PR4` |
-| #5 | 1479/10¹² | `PRChecksB.PR5`, plus `PRChecksB.PR5Analytic` for its analytic inequalities |
+| #5 | 1479/10¹² | `PRChecksB.PR5` (with its h = 50 paired bit network), plus `PRChecksB.PR5Analytic` for its analytic inequalities |
 | #6 | 1624/10¹² | `PRChecksB.PR6` |
 | #7 | 373/10¹¹ | `PRChecksB.PR7` |
 | #8 | 59/10¹¹ | `PRChecksA.PR8` |
@@ -44,10 +44,25 @@ python3 formal/open-prs/axioms/check_axioms_B.py   # #print axioms, PRChecksB
 
 `PRChecksA` prints its axioms during the build.
 
-Each drift test checks every Lean literal against that PR's own certificate JSON, and
-`drift_A.py` also checks the quoted note lines. The PR files they read are vendored in
-`data/`. `data/MANIFEST.json` records each file's PR head commit and SHA-256, and
-`tests/test_open_pr_lean.py` fails if a vendored file changes. All 310 theorems use only
+What the drift tests check (a literal "occurs" as a whole token, outside comments):
+
+- `drift_A.py`: each certificate value and quoted note line against a literal in every named
+  declaration; every certificate leaf and every Lean literal of four or more digits is
+  accounted for.
+- `drift_B.py`: the literal on each line tagged `-- json …`; a tag on every core certificate
+  value and numeric definition; the exponent certificates and deficit slacks use their
+  tagged savings (`USES`); the `PR5Analytic` constants against the vendored note and script
+  lines (`LINES`).
+- `drift_C.py`: its certificate rows, the assembly entry by entry, and every Lean literal of
+  four or more digits.
+
+Not every literal is checked: proof steps and short literals outside the rows are not. The
+certified savings and θ̄ are also tied in Lean (`exponents_certified`, `path_moments` via
+`path_moment_rational`). `tests/test_open_pr_lean.py` applies eleven weakening mutations and
+requires each to fail its drift test.
+
+The PR files are vendored in `data/`. `data/MANIFEST.json` records each file's PR head
+commit and SHA-256, and the test fails if a vendored file changes. All 334 theorems use only
 `propext`, `Classical.choice` and `Quot.sound`; there is no `sorry` or `native_decide`.
 
 ## Findings
@@ -66,9 +81,14 @@ No certificate value is wrong. The claims that need fixing:
    1 − σ = 750/10¹¹; the certificate has R = 90950 and 1 − σ = 2970/10¹¹. The older
    numbers are internally consistent (`rect_*`). The notes are invalid as written; the
    certificate and κ check.
-4. **#5 and #6:** "g₂, g₃, g₄ ≤ a·min{ε, 1 − ε}" is false for g₄. What is true is
-   min{g₃, g₄} ≤ a·min{ε, 1 − ε} (`min_g3_g4_le`), and both ceilings hold
-   (`g4_exceeds_a_min`, `scoped_ceiling`).
+4. **#5 and #6: κ < a/2 is a ceiling only with τ fixed, as in finding 1.** The published
+   networks certify more: 1 − τ = 29643/10¹³ (paired, #5) and 325018/10¹⁴ (aligned, #6).
+   With these, κ = 14820/10¹³ (#5) and 162508/10¹⁴ (#6) meet all 29 slacks and seven
+   margins (`Certified.fixed_tau_ceiling_beaten`). The ceilings for these networks are
+   κ < 14825/10¹³ and κ < 16254/10¹³ (`Certified.certified_ceiling`), within 5/10¹³ and
+   32/10¹⁴ of the attained values, so κ < 2⁻²⁹ still holds. Also, "g₂, g₃, g₄ ≤
+   a·min{ε, 1 − ε}" is false for g₄; what is true is min{g₃, g₄} ≤ a·min{ε, 1 − ε}
+   (`min_g3_g4_le`, `g4_exceeds_a_min`).
 5. **#6:** "a further 3% on a_b would close this window" holds only at β = 19/25. The
    window closes at about 7.7% (`window_size`).
 6. **#5: wording around the Harvey–van der Hoeven lemmas.** The proofs still hold, but:

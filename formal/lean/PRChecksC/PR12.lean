@@ -250,7 +250,30 @@ theorem kappa_witness :
     1 - P.τ = 253 / 10 ^ 9 ∧ 1 - P.σ = 7 / 10 ^ 7 := by
   unfold Params.G3Min; norm_num [P, PR10.P]
 
-/-- negative control (`verify.py`): a headline equal to the minimum margin is not strict -/
-theorem kappa_at_margin_rejected : ¬ (P.g3 < P.g3) := lt_irrefl _
+/-- negative control (`verify.py`, `assembly(minimum_margin)`): with `κ` set to the minimum
+margin, the absorption condition fails -/
+theorem kappa_at_margin_rejected : ¬ ({ P with κ := P.g3 } : Params).G3Min := by
+  unfold Params.G3Min
+  intro h
+  exact lt_irrefl _ h.2.2.2.2.2.2
+
+/-- the rational moment bound of `bit_moment_upper` as a function of the role count `R'`
+(same logarithm bounds, `a = 253/10⁹`) -/
+def momentUpper (R' : ℕ) : ℚ :=
+  let W' : ℚ := 2 * v ^ 2 * (v + R')
+  let B' : ℚ := v ^ 2 * R'
+  let s' : ℚ := W' * m - (N - 2 * L)
+  let S' : ℚ := s' - (B' * k1 + B' * k2 + 2 * N * k3 + B' * kc)
+  S' / (W' * m) / (1 - 253 / 10 ^ 9 * (2040718429 / 200000000)) +
+    B' * k1 / (W' * m) / (1 - 253 / 10 ^ 9 * (4454351 / 1000000000)) +
+    B' * k2 / (W' * m) / (1 - 253 / 10 ^ 9 * (8624109 / 125000000)) +
+    2 * N * k3 / (W' * m) / (1 - 253 / 10 ^ 9 * (8912139 / 125000000)) +
+    B' * kc / (W' * m) / (1 - 253 / 10 ^ 9 * (1700598691 / 500000000))
+
+/-- negative control (`verify.py`, `bit(roles + 1000000)`): the certificate holds at the
+producer's `R` and fails once `R` is inflated by `10⁶` -/
+theorem inflated_roles_rejected : momentUpper R < 1 ∧ 1 < momentUpper (R + 1000000) := by
+  simp only [momentUpper, R, c_add, Q_out, v, m, N, L, k1, k2, k3, kc, a1, a2, a3, h]
+  norm_num [Nat.choose]
 
 end PRChecksC.PR12

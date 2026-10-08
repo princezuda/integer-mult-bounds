@@ -4,9 +4,12 @@
 Fails unless
 
 1. every `Key` row's JSON value (in the PR's own certificate) equals the Lean literal, and
-   that literal occurs in the named Lean declaration;
+   that literal occurs in every named Lean declaration;
 2. every `Line` row's note/doc lines still contain the quoted anchor, and its Lean literal
-   occurs in the named declaration (numbers that exist only in the PR's prose);
+   occurs in every named declaration (numbers that exist only in the PR's prose);
+
+   "occurs" means: as a whole token (not inside a longer number) in the declaration with its
+   comments removed;
 3. every entry of the certificates' `parameters`, `constraint_slacks`/`slacks`, `margins` and
    `recurrence`/`exponents` dicts appears in the Lean `P` / `slack_values` / `margin_values` /
    `recurrence_values` with an equal literal, and the Lean side has no extra entries;
@@ -280,7 +283,8 @@ ROWS = [
         k8('v', lean='2300'), k8('m', lean='17576'), k8('N', lean='12167000000'),
         k8('W', lean='4128046210000'), k8('L', lean='10728120000'),
         k8('s', lean='72554537309200000')]),
-    ('PR8', ['W8', 'L8', 's8'], [k8('n', lean='25'), k8('h', lean='26')]),
+    ('PR8', ['W8', 'L8', 's8'], [k8('n', lean='25')]),
+    ('PR8', ['L8', 's8'], [k8('h', lean='26')]),
     ('PR8', ['eta', 'saving_slack', 'exponent'], [k8('eta', lean='68 / 1714426753')]),
     ('PR8', ['saving_slack', 'exponent'], [k8('complex_saving', lean='1 / 250000000')]),
     ('PR8', ['guard_constants'], [
@@ -402,18 +406,25 @@ STOP = re.compile(r'^(?:theorem|def|noncomputable|/-|end |namespace|section|macr
 
 
 def lean_decls():
+    """(module, name) -> declaration text with comments removed"""
     out = {}
     for f in sorted(LEAN.glob('*.lean')):
         text = f.read_text()
         for match in DECL.finditer(text):
             rest = text[match.end():]
             stop = STOP.search(rest)
-            out[(f.stem, match.group(1))] = match.group(0)+(rest[:stop.start()] if stop else rest)
+            body = match.group(0)+(rest[:stop.start()] if stop else rest)
+            out[(f.stem, match.group(1))] = strip_comments(body)
     return out
 
 
 def norm(s):
     return ' '.join(s.split())
+
+
+def has_token(body, literal):
+    """`literal` occurs in `body` (whitespace-normalized), not inside a longer token"""
+    return re.search(r'(?<![\w.])' + re.escape(norm(literal)) + r'(?![\w.])', norm(body)) is not None
 
 
 def lean_value(literal):
@@ -474,12 +485,12 @@ def check():
         for name in names:
             if (module, name) not in decls:
                 errors.append(f'{module}.{name}: not found in Lean sources')
-        body = ' '.join(decls.get((module, n), '') for n in names)
         for ref in refs:
             n_refs += 1
             accounted.setdefault(module, set()).update(re.findall(r'\d+', ref.lean))
-            if norm(ref.lean) not in norm(body):
-                errors.append(f'{module}.{"/".join(names)}: literal `{ref.lean}` not in declaration')
+            for name in names:
+                if not has_token(decls.get((module, name), ''), ref.lean):
+                    errors.append(f'{module}.{name}: literal `{ref.lean}` not in declaration')
             if isinstance(ref, Line):
                 lines = (PRS[ref.pr]/ref.path).read_text().split('\n')
                 if not 1 <= ref.first <= ref.last <= len(lines):

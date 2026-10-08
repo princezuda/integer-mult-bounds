@@ -5,12 +5,16 @@ Modelled on main's `formal/lean/sources.py` (`Key` refs). For each PR worktree
 (vendored under `data/pr9` .. `data/pr12`) it checks
 
 * explicit `Key` rows: the certificate value at `keys` equals the Lean literal `lean`,
-  and that literal occurs (whitespace-normalized) in the named Lean declaration;
+  and that literal occurs as a whole token in the named Lean declaration with its comments
+  removed;
 * automatic rows for the assembly: every JSON constraint / margin / recurrence key is
   stated in the Lean `slack_values` / `margin_values` / `recurrence_values` theorem
   with an equal literal (and no extra or missing names), and every JSON parameter equals
   the corresponding field of the Lean `def P : Params`;
-* a few cross-PR text checks (PR #11's quoted κ against PR #10's JSON).
+* a few cross-PR text checks (PR #11's quoted κ against PR #10's JSON);
+* a literal sweep: every integer literal of four or more digits (other than powers of ten)
+  in the Lean modules, comments removed, is a digit string of some checked literal or is
+  listed in `ALLOW` with the reason it is not PR data.
 
 Run: python3 drift.py   (exit 1 on any mismatch)
 """
@@ -40,19 +44,31 @@ DECL = re.compile(r'^(?:noncomputable )?(?:theorem|def) (\S+)', re.M)
 STOP = re.compile(r'^(?:theorem|def|noncomputable|/-|end |namespace|section)', re.M)
 
 
+def strip_comments(text):
+    text = re.sub(r'/-.*?-/', '', text, flags=re.S)
+    return re.sub(r'--[^\n]*', '', text)
+
+
 def lean_decls():
+    """(module, name) -> declaration text with comments removed"""
     out = {}
     for f in sorted(LEAN.glob('*.lean')):
         text = f.read_text()
         for match in DECL.finditer(text):
             rest = text[match.end():]
             stop = STOP.search(rest)
-            out[(f.stem, match.group(1))] = match.group(0) + (rest[:stop.start()] if stop else rest)
+            body = match.group(0) + (rest[:stop.start()] if stop else rest)
+            out[(f.stem, match.group(1))] = strip_comments(body)
     return out
 
 
 def norm(s):
     return ' '.join(s.split())
+
+
+def has_token(body, literal):
+    """`literal` occurs in `body` (whitespace-normalized), not inside a longer token"""
+    return re.search(r'(?<![\w.])' + re.escape(norm(literal)) + r'(?![\w.])', norm(body)) is not None
 
 
 def _eval(literal):
@@ -215,7 +231,7 @@ GUARD10 = [
     (['C1'], 'guard_constants', '11999 / 10000'),
     (['E'], 'guard_constants', '580186831374453739191483276086074980416'),
     (['dependency_constant'], 'guard_constants', '580186831374453739191483276086075331649000'),
-    (['m_to_rho_lower'], 'guard_constants', '160000'),
+    (['m_to_rho_lower'], 'mlow', '160000'),
     (['q'], 'guard_constants', '22120'),
     (['h'], 'h', '28'), (['m'], 'bit_counts', '21952'),
     (['selected_ranks', 0], 'complex_counts', '21896'),
@@ -223,7 +239,7 @@ GUARD10 = [
     (['path_moment_upper', 'no_bulk'], 'path_moment_rational', '553 / 4000'),
     (['path_moment_upper', 'rank_21896'], 'path_moment_rational', '47817969 / 47897500'),
     (['path_moment_upper', 'rank_21168'], 'path_moment_rational', '1213697 / 1260000'),
-    (['theta_upper'], 'guard_constants', '999 / 1000'),
+    (['theta_upper'], 'θbar', '999 / 1000'),
     (['theta_slack'], 'path_moment_rational', '63267 / 95795000'),
     (['rho'], 'ρq', '6 / 5'), (['beta'], 'βq', '1 / 1000'), (['zeta'], 'ζq', '1 / 10000'),
 ]
@@ -304,6 +320,50 @@ rows('pr12', C12, ['assembly'], 'PR12', [
     (['absorption_gap'], 'kappa_witness', '4991095000007 / 500000000000000000000000')])
 rows('pr12', C12, [], 'PR12', [(['kappa_ratio_to_pr10'], 'kappa_witness', '6324500 / 6149999')])
 
+# Integer literals (>= 4 digits) of the Lean modules that are not certificate values.
+ALLOW = {
+    'Common': {
+        '69314718055994530': 'our log 2 enclosure', '69314718055994531': 'our log 2 enclosure',
+        '109861228866810969': 'our log 3 enclosure', '109861228866810970': 'our log 3 enclosure',
+        '160943791243410037': 'our log 5 enclosure', '160943791243410038': 'our log 5 enclosure',
+        '99966136': 'our bound log 21952 < 9.9966136', '33322046': 'our bound log 28 < 3.3322046',
+        '340119738166215539': 'our bound on log 30',
+        '1020359214498646617': 'our bound on log 27000',
+    },
+    'PR9': {
+        '99966136': 'our bound log 21952 < 9.9966136 (the PR uses its own enclosure)',
+        '20475': 'C(28,4), the star count', '7608': "README: lambda' = 1 - 7608/10^12",
+        '38032392': 'g3 = 3.8032392e-9 in decimal, equal to the checked minimum margin',
+    },
+    'PR10': {
+        '200000': '2555/10^6 = 511/200000 (complex_moment_upper)',
+        '2273': '36368/10^6 = 2273/62500 (complex_moment_upper)', '62500': 'same',
+        '195222619248167347200': 'S0 of the intermediate 177/10^9 certificate (not vendored)',
+        '20051151': 'S0 weight numerator of the 177/10^9 certificate',
+        '9018851588112489028174294032233536762346739': 'gap of the 177/10^9 certificate',
+        '50604920044758147283008773507127786190942259516252989': 'same',
+        '6993': 'batched-assembly.tex:95, leaf = 1 - 6993/10^10',
+        '12299998': 'batched-assembly.tex:150, kappa = 1.2299998e-7',
+        '32000000': 'patch exponent (1 - eps)/2 = 8000001/32000000',
+        '95991988001': 'patch exponent eps*C1 = 95991988001/160000000000',
+    },
+    'PR11': {
+        '13824': 'm = 24^3', '17576': 'm = 26^3', '19683': 'm = 27^3', '24389': 'm = 29^3',
+        '32768': 'm = 32^3', '8000': '20^3 (q >= 7 tail)',
+        '9534': 'our bound log 13824 >= 9.534', '98875': 'our bound log 19683 >= 9.8875',
+        '102035': 'our bound log 27000 >= 10.2035',
+        '1716': 'C(13,6)', '1717': '1 + C(13,6)',
+        '282439008': 'q = 5 exact eta at h = 24, evaluated by q5_rows',
+        '2553843750': 'same, h = 25', '1858802608': 'same, h = 26', '2323': 'same, h = 27',
+        '47877204762': 'same, h = 27', '2810316992': 'same, h = 28', '15611447678': 'same, h = 29',
+    },
+    'PR12': {
+        '102837': 'README "2.84% larger" bracket', '102838': 'same',
+        '23000': 'proof.tex: C(5,2) C(25,3)',
+        '599949916007': 'patch exponent eps*C1 = 599949916007/10^12',
+    },
+}
+
 # ---------------------------------------------------------------------------
 # Automatic assembly rows
 # ---------------------------------------------------------------------------
@@ -382,13 +442,33 @@ def check():
             continue
         if _eval(literal) != value:
             errors.append(f'{r.pr} {r.path} {".".join(map(str, r.keys))}: {value} != Lean {literal}')
-        elif norm(literal) not in norm(body):
+        elif not has_token(body, literal):
             errors.append(f'{r.module}.{r.decl}: literal {literal} not in declaration')
     n = len(ROWS) + check_assembly(decls, errors) + check_text(errors)
+    n += sweep(decls, errors)
     return errors, n
+
+
+def sweep(decls, errors):
+    """every 4+ digit integer literal of the Lean modules is checked or explained"""
+    accounted = set()
+    for r in ROWS:
+        accounted.update(re.findall(r'\d+', r.lean))
+    for pr, path, prefix, module in ASSEMBLY:
+        for theorem in ('slack_values', 'margin_values', 'recurrence_values', 'P'):
+            accounted.update(re.findall(r'\d+', decls[(module, theorem)]))
+    count = 0
+    for f in sorted(LEAN.glob('*.lean')):
+        text = strip_comments(f.read_text())
+        for token in sorted(set(re.findall(r'(?<![\w.])\d{4,}(?![\w.])', text))):
+            count += 1
+            if re.fullmatch(r'10*', token) or token in accounted or token in ALLOW.get(f.stem, {}):
+                continue
+            errors.append(f'{f.name}: literal {token} is neither tied to the PR data nor allowed')
+    return count
 
 
 if __name__ == '__main__':
     errs, n = check()
-    print('\n'.join(errs) or f'OK: {n} Lean literals match the PR certificates')
+    print('\n'.join(errs) or f'OK: {n} checks (certificate rows, assembly, text, literal sweep)')
     sys.exit(1 if errs else 0)

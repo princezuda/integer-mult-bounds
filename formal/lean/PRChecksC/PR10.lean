@@ -308,40 +308,51 @@ def Cdep : ℕ := 1000 * (E + 16 * m + 1)
 def ζq : ℚ := 1 / 10000
 def βq : ℚ := 1 / 1000
 def ρq : ℚ := 6 / 5
+/-- the common rational upper bound `θ̄` of the three path moments -/
+def θbar : ℚ := 999 / 1000
+/-- the rational lower bound for `m^ρ` -/
+def mlow : ℕ := 160000
 def C0 : ℕ := 16304044734034229354982033946533362986146411372544000
 
 /-- the exact integer and rational guard inequalities -/
 theorem guard_constants :
     q = 22120 ∧ 2 * c1 > q ∧ 2 * c2 > q ∧ c1 < m ∧ c2 < m ∧
-    160000 ^ 5 < m ^ 6 ∧
+    mlow ^ 5 < m ^ 6 ∧
     E = 580186831374453739191483276086074980416 ∧
     36 * Wc ^ 3 + 4 * sc + 4 * Wc + 8 * m + 4 < E ∧
     Cdep = 580186831374453739191483276086075331649000 ∧
-    (E : ℚ) ≤ Cdep * (1 - 999 / 1000) ∧ 16 * m ≤ Cdep ∧
+    (E : ℚ) ≤ Cdep * (1 - θbar) ∧ 16 * m ≤ Cdep ∧
     -- `C0 = ⌈128 m (1 + 1/ζ) C_dep⌉`, an integer, and the completed-layer inequality
     (C0 : ℚ) = 128 * (m : ℚ) * (1 + 1 / ζq) * Cdep ∧
     (m : ℚ) * (1 + 1 / ζq) * Cdep + 18 ≤ C0 ∧
     ρq - (ρq - 1) * βq + ζq = 11999 / 10000 := by
-  simp only [q, E, Cdep, C0, ζq, βq, ρq, c1, c2, Wc, sc, Dc, Nc, Lc, aux, vc, m, h, Rc]
+  simp only [q, E, Cdep, C0, ζq, βq, ρq, θbar, mlow, c1, c2, Wc, sc, Dc, Nc, Lc, aux, vc, m, h,
+    Rc]
   norm_num [Nat.choose]
 
-/-- the three rational path-moment upper bounds of note lines 104-110, below `999/1000` -/
-theorem path_moment_rational :
-    (22120 : ℚ) / 160000 = 553 / 4000 ∧
-    (22120 - 21896 : ℚ) / 160000 +
-        (1 - 6 / 5 * (56 / 21952) + 3 / 25 * ((56 / 21952) ^ 2 / (1 - 56 / 21952))) =
-      47817969 / 47897500 ∧
-    (22120 - 21168 : ℚ) / 160000 +
-        (1 - 6 / 5 * (784 / 21952) + 3 / 25 * ((784 / 21952) ^ 2 / (1 - 784 / 21952))) =
-      1213697 / 1260000 ∧
-    (553 / 4000 : ℚ) < 999 / 1000 ∧ (47817969 / 47897500 : ℚ) < 999 / 1000 ∧
-    (1213697 / 1260000 : ℚ) < 999 / 1000 ∧
-    999 / 1000 - max (max (553 / 4000) (47817969 / 47897500)) (1213697 / 1260000 : ℚ) =
-      63267 / 95795000 := by
-  norm_num
+/-- the upper bound `1 - 6t/5 + (3/25) t²/(1-t)` of `(1-t)^(6/5)` (`taylor_six_fifths`) -/
+def taylorUp (t : ℚ) : ℚ := 1 - 6 / 5 * t + 3 / 25 * (t ^ 2 / (1 - t))
 
-/-- `160000⁵ < m⁶` gives `m^(6/5) > 160000` -/
-theorem m_rho_gt : (160000 : ℝ) < (21952 : ℝ) ^ ((6 : ℝ) / 5) := by
+/-- the three rational path-moment upper bounds of note lines 104-110, below `θ̄` -/
+theorem path_moment_rational :
+    (q : ℚ) / mlow = 553 / 4000 ∧
+    ((q : ℚ) - c1) / mlow + taylorUp (((m : ℚ) - c1) / m) = 47817969 / 47897500 ∧
+    ((q : ℚ) - c2) / mlow + taylorUp (((m : ℚ) - c2) / m) = 1213697 / 1260000 ∧
+    (553 / 4000 : ℚ) < θbar ∧ (47817969 / 47897500 : ℚ) < θbar ∧
+    (1213697 / 1260000 : ℚ) < θbar ∧
+    θbar - max (max (553 / 4000) (47817969 / 47897500)) (1213697 / 1260000 : ℚ) =
+      63267 / 95795000 := by
+  have hc1 : c1 = 21896 := by norm_num [c1, m, h]
+  have hc2 : c2 = 21168 := by norm_num [c2, m, h]
+  rw [hc1, hc2]
+  norm_num [q, mlow, m, h, taylorUp, θbar]
+
+/-- `mlow⁵ < m⁶` gives `m^ρ > mlow` -/
+theorem m_rho_gt : (mlow : ℝ) < (m : ℝ) ^ ((ρq : ℚ) : ℝ) := by
+  have hρ : ((ρq : ℚ) : ℝ) = 6 / 5 := by norm_num [ρq]
+  have hm : (m : ℝ) = 21952 := by norm_num [m, h]
+  have hl : (mlow : ℝ) = 160000 := by norm_num [mlow]
+  rw [hρ, hm, hl]
   have hpos : 0 < (21952 : ℝ) ^ ((6 : ℝ) / 5) := by positivity
   have h5 : ((21952 : ℝ) ^ ((6 : ℝ) / 5)) ^ 5 = 21952 ^ 6 := by
     rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num),
@@ -352,35 +363,49 @@ theorem m_rho_gt : (160000 : ℝ) < (21952 : ℝ) ^ ((6 : ℝ) / 5) := by
   rw [h5] at this
   norm_num at this
 
-/-- **The path moments** (eq. `bulk-path-moments`), as real-number inequalities -/
+/-- **The path moments** (eq. `bulk-path-moments`), as real-number inequalities: the rational
+bounds of `path_moment_rational`, `m^ρ > mlow` and `taylor_six_fifths` -/
 theorem path_moments :
-    (22120 : ℝ) / 21952 ^ ((6 : ℝ) / 5) < 999 / 1000 ∧
-    (22120 - 21896 : ℝ) / 21952 ^ ((6 : ℝ) / 5) + ((21896 : ℝ) / 21952) ^ ((6 : ℝ) / 5) <
-      999 / 1000 ∧
-    (22120 - 21168 : ℝ) / 21952 ^ ((6 : ℝ) / 5) + ((21168 : ℝ) / 21952) ^ ((6 : ℝ) / 5) <
-      999 / 1000 := by
+    (q : ℝ) / (m : ℝ) ^ ((ρq : ℚ) : ℝ) < (θbar : ℝ) ∧
+    ((q : ℝ) - c1) / (m : ℝ) ^ ((ρq : ℚ) : ℝ) + ((c1 : ℝ) / m) ^ ((ρq : ℚ) : ℝ) < θbar ∧
+    ((q : ℝ) - c2) / (m : ℝ) ^ ((ρq : ℚ) : ℝ) + ((c2 : ℝ) / m) ^ ((ρq : ℚ) : ℝ) < θbar := by
+  obtain ⟨r0, r1, r2, s0, s1, s2, -⟩ := path_moment_rational
+  have hc1n : c1 = 21896 := by norm_num [c1, m, h]
+  have hc2n : c2 = 21168 := by norm_num [c2, m, h]
+  have hqn : q = 22120 := by norm_num [q, m, h]
+  have hmn : m = 21952 := by norm_num [m, h]
+  have hθ : θbar = 999 / 1000 := rfl
+  -- the rational bounds, with every definition evaluated
+  rw [hqn, mlow] at r0
+  rw [hqn, hmn, hc1n, mlow] at r1
+  rw [hqn, hmn, hc2n, mlow] at r2
+  rw [hθ] at s0 s1 s2
+  unfold taylorUp at r1 r2
+  have q0 := lt_of_eq_of_lt r0 s0
+  have q1 := lt_of_eq_of_lt r1 s1
+  have q2 := lt_of_eq_of_lt r2 s2
+  simp only [Nat.cast_ofNat] at q0 q1 q2
+  have e0 := (Rat.cast_lt (K := ℝ)).mpr q0
+  have e1 := (Rat.cast_lt (K := ℝ)).mpr q1
+  have e2 := (Rat.cast_lt (K := ℝ)).mpr q2
+  simp only [Rat.cast_div, Rat.cast_sub, Rat.cast_add, Rat.cast_mul, Rat.cast_pow, Rat.cast_ofNat,
+    Rat.cast_one] at e0 e1 e2
   have hM := m_rho_gt
+  have hρ : ((ρq : ℚ) : ℝ) = 6 / 5 := by norm_num [ρq]
+  have hθR : ((θbar : ℚ) : ℝ) = 999 / 1000 := by norm_num [θbar]
+  rw [hρ, hmn, mlow] at hM
+  rw [hρ, hθR, hqn, hc1n, hc2n, hmn]
+  push_cast at hM ⊢
   have hd : ∀ x : ℝ, 0 < x → x / 21952 ^ ((6 : ℝ) / 5) < x / 160000 := fun x hx =>
     div_lt_div_of_pos_left hx (by norm_num) hM
-  have t1 := taylor_six_fifths (56 / 21952) (by norm_num) (by norm_num)
-  have t2 := taylor_six_fifths (784 / 21952) (by norm_num) (by norm_num)
-  rw [show (1 : ℝ) - 56 / 21952 = 21896 / 21952 by norm_num] at t1
-  rw [show (1 : ℝ) - 784 / 21952 = 21168 / 21952 by norm_num] at t2
-  have r := path_moment_rational
+  have t1 := taylor_six_fifths ((21952 - 21896) / 21952) (by norm_num) (by norm_num)
+  have t2 := taylor_six_fifths ((21952 - 21168) / 21952) (by norm_num) (by norm_num)
+  rw [show (1 : ℝ) - (21952 - 21896) / 21952 = 21896 / 21952 by norm_num] at t1
+  rw [show (1 : ℝ) - (21952 - 21168) / 21952 = 21168 / 21952 by norm_num] at t2
   refine ⟨?_, ?_, ?_⟩
-  · have := hd 22120 (by norm_num)
-    have e : (22120 : ℝ) / 160000 < 999 / 1000 := by norm_num
-    linarith
-  · have := hd (22120 - 21896) (by norm_num)
-    have e : (22120 - 21896 : ℝ) / 160000 +
-        (1 - 6 / 5 * (56 / 21952) + 3 / 25 * ((56 / 21952) ^ 2 / (1 - 56 / 21952))) <
-        999 / 1000 := by norm_num
-    linarith
-  · have := hd (22120 - 21168) (by norm_num)
-    have e : (22120 - 21168 : ℝ) / 160000 +
-        (1 - 6 / 5 * (784 / 21952) + 3 / 25 * ((784 / 21952) ^ 2 / (1 - 784 / 21952))) <
-        999 / 1000 := by norm_num
-    linarith
+  · have := hd 22120 (by norm_num); linarith
+  · have := hd (22120 - 21896) (by norm_num); linarith
+  · have := hd (22120 - 21168) (by norm_num); linarith
 
 /-- leaf absorption (note lines 129-133): `8 (2m)^(ρ-1) ≤ 16 m` -/
 theorem leaf_absorption : 8 * (2 * 21952 : ℝ) ^ ((6 : ℝ) / 5 - 1) ≤ 16 * 21952 := by
@@ -392,8 +417,10 @@ theorem leaf_absorption : 8 * (2 * 21952 : ℝ) ^ ((6 : ℝ) / 5 - 1) ≤ 16 * 2
 /-- the induction step at an internal call (note lines 134-138): with `e ≥ d^β`,
 `X = C d^(-β(ρ-1)) e^ρ ≥ C d^β ≥ C`, so `θ̄ X + E ≤ X` once `E ≤ (1 - θ̄) C` -/
 theorem internal_step (C d β ρ e E : ℝ) (hd : 1 ≤ d) (hβ : 0 ≤ β) (hρ : 1 ≤ ρ)
-    (he : d ^ β ≤ e) (hC : E ≤ C * (1 - 999 / 1000)) (hC0 : 0 ≤ C) :
-    999 / 1000 * (C * d ^ (-(β * (ρ - 1))) * e ^ ρ) + E ≤ C * d ^ (-(β * (ρ - 1))) * e ^ ρ := by
+    (he : d ^ β ≤ e) (hC : E ≤ C * (1 - (θbar : ℝ))) (hC0 : 0 ≤ C) :
+    (θbar : ℝ) * (C * d ^ (-(β * (ρ - 1))) * e ^ ρ) + E ≤ C * d ^ (-(β * (ρ - 1))) * e ^ ρ := by
+  have hθ : ((θbar : ℚ) : ℝ) = 999 / 1000 := by norm_num [θbar]
+  rw [hθ] at hC ⊢
   have hd0 : 0 < d := by linarith
   have h1 : (d ^ β) ^ ρ ≤ e ^ ρ :=
     Real.rpow_le_rpow (Real.rpow_nonneg hd0.le _) he (by linarith)

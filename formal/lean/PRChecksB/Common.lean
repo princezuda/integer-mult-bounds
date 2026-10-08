@@ -12,9 +12,10 @@ import Mathlib.Data.Complex.ExponentialBounds
 of CrocSwap/integer-mult-bounds (commit f99d715), so that this project does not
 depend on that branch.
 
-New here: `log_21952` (the `h = 28` label dimension of PR #7), the parameter record
-`Params` with the compact-control recurrence exponents and the seven margins in both
-Gaussian models, and the generic scoped-ceiling inequalities.
+New here: `log_21952` (the `h = 28` label dimension of PR #7), `log_125000_gt`, `log_prod`,
+`certified_saving_le`, the parameter record `Params` with the compact-control recurrence
+exponents, the seven margins in both Gaussian models and the 29 fast slacks (`FastOK`), and
+the generic scoped-ceiling inequalities.
 -/
 
 namespace PRChecksB
@@ -58,7 +59,7 @@ theorem log_split (k : ℕ) :
     exact mul_le_mul_of_nonneg_left this (by positivity)
   linarith
 
-def L25 : ℚ := 14 * (6931471808 / 10 ^ 10) + 256 * (9998147318001 / 10 ^ 13 - 1)
+def L25 : ℚ := 14 * (6931471808 / 10 ^ 10) + 256 * (9998147318001 / 10 ^ 13 - 1)  -- audit
 
 theorem log_15625 : Real.log 15625 < (L25 : ℝ) := by
   have := log_split 14
@@ -111,6 +112,50 @@ theorem log_21952 : Real.log 21952 < 9997 / 1000 := by
 theorem log_21952_lt_10 : Real.log 21952 < 10 := by
   have := log_21952; linarith
 
+/-! ## New: `log 125000 > 11.7349`, exact `log` products, certified-saving bound -/
+
+/-- `125000 = 2^17 · 125000/131072` and `log y ≥ 1 - 1/y` (as `PRChecksA.Bit.log_125000_gt`) -/
+theorem log_125000_gt : (117349 : ℝ) / 10000 < Real.log 125000 := by
+  have h2 : 0.6931471803 < Real.log 2 := Real.log_two_gt_d9
+  have hy : (0 : ℝ) < 125000 / 131072 := by norm_num
+  have hl : 1 - 1 / (125000 / 131072 : ℝ) ≤ Real.log (125000 / 131072) := by
+    have := Real.log_le_sub_one_of_pos (show (0 : ℝ) < 1 / (125000 / 131072) by positivity)
+    rw [one_div, Real.log_inv] at this
+    rw [one_div]; linarith
+  have e : Real.log 125000 = 17 * Real.log 2 + Real.log (125000 / 131072) := by
+    rw [show (125000 : ℝ) = 2 ^ 17 * (125000 / 131072) by norm_num,
+      Real.log_mul (by positivity) hy.ne', Real.log_pow]
+    push_cast; ring_nf
+  norm_num at h2 hl
+  rw [e]; linarith
+
+/-- `log M = a A + b B + c C` for `M = (16/15)^a (25/24)^b (81/80)^c`, `A = -log(15/16)`, … -/
+theorem log_prod (a b c : ℕ) (M : ℝ)
+    (hM : M = (1 / (1 - 1 / 16)) ^ a * (1 / (1 - 1 / 25)) ^ b * (1 / (1 - 1 / 81)) ^ c) :
+    Real.log M = a * -Real.log (1 - 1 / 16) + b * -Real.log (1 - 1 / 25) +
+      c * -Real.log (1 - 1 / 81) := by
+  rw [hM, Real.log_mul (by positivity) (by positivity), Real.log_mul (by positivity) (by positivity),
+    Real.log_pow, Real.log_pow, Real.log_pow]
+  simp only [one_div, Real.log_inv]
+
+/-- a certified `σ` (`r ≤ m^σ`) has `(1-σ) log m ≤ (1 - r/m)/(r/m)` (main's
+`certified_saving_le`) -/
+theorem certified_saving_le (m r σ' : ℝ) (hm : 1 < m) (hr : 0 < r)
+    (hcert : r ≤ m ^ σ') :
+    (1 - σ') * Real.log m ≤ (1 - r / m) / (r / m) := by
+  have hm0 : 0 < m := by linarith
+  have hlog : Real.log r ≤ σ' * Real.log m := by
+    have := Real.log_le_log hr hcert
+    rwa [Real.log_rpow hm0] at this
+  have hq : 0 < r / m := div_pos hr hm0
+  have key : -Real.log (r / m) ≤ (1 - r / m) / (r / m) := by
+    have := Real.log_le_sub_one_of_pos (inv_pos.mpr hq)
+    rw [Real.log_inv] at this
+    have e : (1 - r / m) / (r / m) = (r / m)⁻¹ - 1 := by field_simp
+    rw [e]; linarith
+  rw [Real.log_div hr.ne' hm0.ne'] at key
+  nlinarith
+
 /-! ## Parameters, recurrence exponents and margins
 
 `internal`, `leaf`, `prep`, `layer` are `scripts/compact_control_layer.py`,
@@ -149,6 +194,21 @@ def g5tight : ℚ := 1 / 4 - p.δ - 5 / 4 * p.ε
 def g5fast : ℚ := 1 - p.δ - 2 * p.ε
 def g6 : ℚ := 1 - p.δ - p.ε
 def g7 : ℚ := p.ε
+
+/-- the 29 fast-Gaussian slacks (`fast_constraints` plus the compact-control rows), as
+listed in `PR5.Fast.constraint_slacks` -/
+def FastOK : Prop :=
+  0 < p.ε * p.c ∧ 0 < 1 - p.ε - p.ε * p.c ∧ 0 < 1 - 2 * p.ε ∧ 0 < 1 - p.β ∧ 0 < p.β ∧
+  0 < p.c ∧ 0 < 1 - p.τ - p.ε * (1 - p.τ) ∧ 0 < 1 / 8 - p.δ ∧ 0 < p.δ ∧ 0 < p.ε ∧
+  0 < 1 - p.δ - 2 * p.ε ∧ 0 < 1 - p.ε * p.C1 ∧ 0 < p.κ ∧ 0 < p.lam - p.σ ∧
+  0 < p.lam - p.τ ∧ 0 < 1 - p.lam ∧ 0 < p.lamp - p.lam ∧ 0 < 1 - p.lamp ∧
+  0 < p.lamp - (p.σ + p.β * (1 - p.σ)) ∧ 0 < p.lam - p.internal ∧
+  0 < 1 - p.ε * (1 + p.c) ∧ 0 < 1 - 2 * p.ε ∧ 0 < 1 - p.ε ∧ 0 < p.lamp - p.prep ∧
+  0 < 1 - p.δ - p.ε ∧ 0 < 1 - p.σ ∧ 0 < p.σ ∧ 0 < 1 - p.τ ∧ 0 < p.τ
+
+/-- `κ` is below all seven fast-Gaussian margins -/
+def FastAbsorbs : Prop :=
+  p.κ < p.g1 ∧ p.κ < p.g2 ∧ p.κ < p.g3 ∧ p.κ < p.g4 ∧ p.κ < p.g5fast ∧ p.κ < p.g6 ∧ p.κ < p.g7
 
 end Params
 

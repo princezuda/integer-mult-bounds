@@ -33,8 +33,11 @@ open Real
 **taken as given** (from running the C++ checker) -/
 def Rb : ℕ := 11840940  -- json prime-field28.json witness.bit.roles
 
+/-- the certified bit saving `a_b = 3/(4·10⁸)` -/
+def aB : ℚ := 3 / 400000000  -- json prime-field28.json witness.constraints.tau_below_one
+
 def v : ℕ := Nat.choose 28 5
-def m : ℕ := 28 ^ 3
+def m : ℕ := 28 ^ 3  -- json prime-field28.json witness.bit.m
 def N : ℕ := v ^ 3
 def c2 : ℕ := Nat.choose 28 2
 /-- `W = 2v²(v + R)` (`bit_counts`) -/
@@ -67,18 +70,18 @@ theorem bit_eta :
   simp only [Wb, Lb, Db, N, m, Rb, v_eq, c2_eq]; norm_num
 
 theorem bit_deficit_slack :
-    (39 / 520019360 : ℚ) - 3 / 400000000 * (9997 / 1000) =
+    (39 / 520019360 : ℚ) - aB * (9997 / 1000) =
       25621089 / 1300048400000000000  -- json prime-field28.json witness.deficit_slacks.bit
-    := by norm_num
+    := by norm_num [aB]
 
 theorem bit_log : Real.log 21952 < 9997 / 1000  -- json prime-field28.json witness.log_upper.bit
     := log_21952
 
-/-- **exponent certificate**: `s_b / W_b < 21952 ^ (1 - 3/(4·10⁸))` -/
+/-- **exponent certificate**: `s_b / W_b < 21952 ^ (1 - a_b)` -/
 theorem bit_exponent :
-    ((sb : ℕ) : ℝ) / (Wb : ℕ) < (21952 : ℝ) ^ (1 - (3 / 400000000 : ℝ)) := by
+    ((sb : ℕ) : ℝ) / (Wb : ℕ) < (21952 : ℝ) ^ (1 - (aB : ℝ)) := by
   obtain ⟨-, -, -, -, hW, -, -, hs, -⟩ := bit_counts
-  rw [hs, hW]
+  rw [hs, hW, show ((aB : ℚ) : ℝ) = 3 / 400000000 by norm_num [aB]]
   apply exponent_certificate 21952 (9997 / 1000) (3 / 400000000) (39 / 520019360) _
     (by norm_num) (by norm_num) log_21952
   · norm_num
@@ -122,6 +125,9 @@ def cxInj : ℕ := 32816  -- json prime-field28.json complex_checks.stats.inject
 def cxDisj : ℕ := 43634  -- json prime-field28.json complex_checks.stats.disjoint_additions
 def cxStar : ℕ := 17388  -- json prime-field28.json complex_checks.stats.pair_star_additions
 
+/-- the certified complex saving `a_c = 39/10⁹` -/
+def aC : ℚ := 39 / 1000000000  -- json prime-field28.json witness.constraints.sigma_below_one
+
 def vc : ℕ := Nat.choose 28 3
 def Nc : ℕ := vc ^ 3
 def Ic : ℕ := 3 * vc ^ 2
@@ -154,18 +160,18 @@ theorem complex_eta :
   simp only [Wc, Lc, Dc, Nc, Ic, m, Rc, vc_eq]; norm_num
 
 theorem complex_deficit_slack :
-    (5 / 12693352 : ℚ) - 39 / 10 ^ 9 * 10 =
+    (5 / 12693352 : ℚ) - aC * 10 =
       619909 / 158666900000000  -- json prime-field28.json witness.deficit_slacks.complex
-    := by norm_num
+    := by norm_num [aC]
 
 theorem complex_log : Real.log 21952 < 10  -- json prime-field28.json witness.log_upper.complex
     := log_21952_lt_10
 
-/-- **exponent certificate**: `s_c / W_c < 21952 ^ (1 - 39/10⁹)` -/
+/-- **exponent certificate**: `s_c / W_c < 21952 ^ (1 - a_c)` -/
 theorem complex_exponent :
-    ((sc : ℕ) : ℝ) / (Wc : ℕ) < (21952 : ℝ) ^ (1 - (39 / 10 ^ 9 : ℝ)) := by
+    ((sc : ℕ) : ℝ) / (Wc : ℕ) < (21952 : ℝ) ^ (1 - (aC : ℝ)) := by
   obtain ⟨-, -, -, hW, -, -, hs, -⟩ := complex_counts
-  rw [hs, hW]
+  rw [hs, hW, show ((aC : ℚ) : ℝ) = 39 / 10 ^ 9 by norm_num [aC]]
   apply exponent_certificate 21952 10 (39 / 10 ^ 9) (5 / 12693352) _
     (by norm_num) (by norm_num) log_21952_lt_10
   · norm_num
@@ -217,9 +223,20 @@ theorem parameter_origin :
     P.τ = 1 - 3 / 400000000 ∧ P.σ = 1 - 39 / 10 ^ 9 ∧ P.lam = 1 - 749 / 10 ^ 11 ∧
     P.lamp = 1 - 748 / 10 ^ 11 ∧ P.κ = 373 / 10 ^ 11 ∧ P.C1 = 5 - 4 * P.β + ζ ∧
     P.β = 19 / 25 ∧  -- json prime-field28.json witness.guard.beta
-    P.C1 = 19601 / 10000  -- json prime-field28.json witness.guard.C1
+    P.C1 = 19601 / 10000 ∧  -- json prime-field28.json witness.guard.C1
+    1 - P.τ = aB ∧ 1 - P.σ = aC
     := by
-  norm_num [P, ζ]
+  norm_num [P, ζ, aB, aC]
+
+/-- `τ` and `σ` are the exponents certified by the two networks -/
+theorem exponents_certified :
+    ((sb : ℕ) : ℝ) / (Wb : ℕ) < (21952 : ℝ) ^ ((P.τ : ℚ) : ℝ) ∧
+    ((sc : ℕ) : ℝ) / (Wc : ℕ) < (21952 : ℝ) ^ ((P.σ : ℚ) : ℝ) := by
+  have hτ : ((P.τ : ℚ) : ℝ) = 1 - (aB : ℝ) := by
+    rw [show P.τ = 1 - aB by norm_num [P, aB]]; push_cast; ring
+  have hσ : ((P.σ : ℚ) : ℝ) = 1 - (aC : ℝ) := by
+    rw [show P.σ = 1 - aC by norm_num [P, aC]]; push_cast; ring
+  rw [hτ, hσ]; exact ⟨bit_exponent, complex_exponent⟩
 
 theorem recurrence_values :
     P.internal = 399999997 / 400000000 ∧  -- json prime-field28.json witness.recurrence.internal
@@ -325,11 +342,14 @@ theorem note_lines :
     (1001 : ℚ) / 1000 / 2 ^ 28 < P.κ ∧ P.κ < (3 : ℚ) / 400000000 / 2 := by
   norm_num [P, Params.internal]
 
-/-- scoped ceiling implied by the fast-Gaussian margins for this bit network (not stated
-in the PR): `κ < a/2 = 3/800000000 < 2^-27` -/
-theorem scoped_ceiling (ε' lamp' κ' : ℝ) (hl : (1 - 3 / 400000000 : ℝ) < lamp') (hε : 0 < ε')
-    (h3 : κ' < ε' * (1 - lamp')) (h4 : κ' < (1 - (1 - 3 / 400000000)) * (1 - ε')) :
+/-- the fast-Gaussian margins with **τ fixed at `P.τ = 1 - a`** give `κ < a/2 = 3/800000000`
+(not stated in the PR; the network itself certifies `1 - τ` up to about `7.502·10⁻⁹`, so this
+is not a ceiling for the network) -/
+theorem scoped_ceiling (ε' lamp' κ' : ℝ) (hl : ((P.τ : ℚ) : ℝ) < lamp') (hε : 0 < ε')
+    (h3 : κ' < ε' * (1 - lamp')) (h4 : κ' < (1 - ((P.τ : ℚ) : ℝ)) * (1 - ε')) :
     κ' < 3 / 800000000 ∧ (3 : ℝ) / 800000000 < 1 / 2 ^ 27 := by
+  have hτ : ((P.τ : ℚ) : ℝ) = 1 - 3 / 400000000 := by norm_num [P]
+  rw [hτ] at hl h4
   have := ceiling_half (1 - 3 / 400000000) ε' lamp' κ' (by norm_num) hl hε h3 h4
   exact ⟨by linarith, by norm_num⟩
 

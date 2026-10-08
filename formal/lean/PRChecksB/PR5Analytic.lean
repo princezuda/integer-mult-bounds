@@ -296,13 +296,13 @@ theorem script_step (A : ℚ) (hA : 4 ≤ A) :
 /-! ## The three certified Neumann samples (`fast-gaussian.json`, `neumann_samples`) -/
 
 /-- `α = ⌊√(b/(8d))⌋`, `γ = 2dα²`, `θ = 1/(4d)`, `n_new = ⌈(6b+1)/(4α²) + 1/θ⌉`,
-`n_hvdh = ⌈6b/(α²θ)⌉`, `n = min`, and the script's checks -/
+`n_hvdh = ⌈6b/(α²θ)⌉`, `n = min`, and the script's checks (including `θ < 1`) -/
 def SampleOK (d b α γ nNew nH n : ℕ) : Prop :=
   8 * d * α ^ 2 ≤ b ∧ b < 8 * d * (α + 1) ^ 2 ∧ γ = 2 * d * α ^ 2 ∧ 4 * γ ≤ b ∧
   ((nNew : ℚ) - 1 < (6 * b + 1) / (4 * α ^ 2) + 4 * d) ∧
   ((6 * b + 1 : ℚ) / (4 * α ^ 2) + 4 * d ≤ nNew) ∧
   ((nH : ℚ) - 1 < 6 * b * (4 * d) / α ^ 2) ∧ ((6 * b : ℚ) * (4 * d) / α ^ 2 ≤ nH) ∧
-  n = min nNew nH ∧ nNew ≤ 30 * d ∧ 2 ≤ α ∧ (1 : ℚ) ≤ α ^ 2 / (4 * d) ∧
+  n = min nNew nH ∧ nNew ≤ 30 * d ∧ 2 ≤ α ∧ (1 : ℚ) ≤ α ^ 2 / (4 * d) ∧ (1 : ℚ) / (4 * d) < 1 ∧
   (6 * b + 1 : ℚ) + K0HI * α ^ 2 * (d + 1 / 2) ≤ 4 * α ^ 2 * nNew ∧
   4 * (α : ℚ) ^ 2 ≤ K0LO * α ^ 2 - 101 / 100
 
@@ -510,10 +510,11 @@ theorem error_budgets (p : ℕ) (hp : 15 < p) :
 
 /-- precision budget for `S'` (my reconstruction of "Take P = 3p"): with
 `m = ⌈√p⌉α`, `α < √p`, `L_A = 3m+3 ≤ 7p` and `log₂ L_A ≤ 0.6p - 13` for `p ≥ 100`, so
-`p + ⌈1.4p⌉ + ⌈log₂ L_A⌉ + 11 ≤ 3p` -/
+`p + ⌈1.4p⌉ + ⌈log₂ L_A⌉ + 11 ≤ 3p` (last conjunct, with `⌈x⌉ ≤ x + 1`) -/
 theorem budget_S (p c α : ℝ) (hp : 100 ≤ p) (hc0 : 0 ≤ c) (hc : c ≤ √p + 1) (hα0 : 0 ≤ α)
     (hα : α ≤ √p) : 3 * (c * α) + 3 ≤ 7 * p ∧
-    Real.logb 2 (3 * (c * α) + 3) ≤ 6 / 10 * p - 13 := by
+    Real.logb 2 (3 * (c * α) + 3) ≤ 6 / 10 * p - 13 ∧
+    p + (14 / 10 * p + 1) + ((6 / 10 * p - 13) + 1) + 11 ≤ 3 * p := by
   have hsq : √p ^ 2 = p := Real.sq_sqrt (by linarith)
   have hs0 := Real.sqrt_nonneg p
   have hs10 : 10 ≤ √p := by nlinarith
@@ -521,7 +522,7 @@ theorem budget_S (p c α : ℝ) (hp : 100 ≤ p) (hc0 : 0 ≤ c) (hc : c ≤ √
     have : c * α ≤ (√p + 1) * √p :=
       mul_le_mul hc hα hα0 (by positivity)
     nlinarith
-  refine ⟨hLA, ?_⟩
+  refine ⟨hLA, ?_, by linarith⟩
   have hl1 := Real.log_two_gt_d9
   have hl2 := Real.log_two_lt_d9
   norm_num at hl1 hl2
@@ -538,12 +539,14 @@ theorem budget_S (p c α : ℝ) (hp : 100 ≤ p) (hc0 : 0 ≤ c) (hc : c ≤ √
 
 /-- precision budget for `E` ("Γ = ⌈29p⌉ and P = 34p suffice"): with
 `m ≤ √p/4 + 1` (`α ≥ 2`), `L_A = 3m+1 ≤ p` and `log₂(F L_A) ≤ 1.14p + log₂ p`, and
-`log₂ p ≤ 2.86p - 13`, so `p + 29p + ⌈log₂(F L_A)⌉ + 11 ≤ 34p` for `p ≥ 100` -/
+`log₂ p ≤ 2.86p - 13`, so `p + 29p + ⌈log₂(F L_A)⌉ + 11 ≤ 34p` for `p ≥ 100` (last
+conjunct, with `⌈x⌉ ≤ x + 1` and `F = 2^⌈1.14α²⌉`) -/
 theorem budget_E (p : ℝ) (hp : 100 ≤ p) :
-    3 * (√p / 4 + 1) + 1 ≤ p ∧ Real.logb 2 p ≤ 286 / 100 * p - 13 := by
+    3 * (√p / 4 + 1) + 1 ≤ p ∧ Real.logb 2 p ≤ 286 / 100 * p - 13 ∧
+    p + 29 * p + ((114 / 100 * p + 1) + (286 / 100 * p - 13) + 1) + 11 ≤ 34 * p := by
   have hsq : √p ^ 2 = p := Real.sq_sqrt (by linarith)
   have hs0 := Real.sqrt_nonneg p
-  refine ⟨by nlinarith, ?_⟩
+  refine ⟨by nlinarith, ?_, by linarith⟩
   have hl1 := Real.log_two_gt_d9
   norm_num at hl1
   have hl0 : 0 < Real.log 2 := by linarith

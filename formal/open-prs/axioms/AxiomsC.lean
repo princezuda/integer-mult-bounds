@@ -96,3 +96,4 @@ import PRChecksC
 #print axioms PRChecksC.PR12.margin_values
 #print axioms PRChecksC.PR12.kappa_witness
 #print axioms PRChecksC.PR12.kappa_at_margin_rejected
+#print axioms PRChecksC.PR12.inflated_roles_rejected

@@ -172,9 +172,10 @@ def q5num (h : ℕ) : ℤ := (Nat.choose h 9 : ℤ) - 6 * Nat.choose h 4 * (h - 
 def q5den (h : ℕ) : ℤ :=
   2 * h ^ 3 * (Nat.choose h 9 + 2 * (Nat.choose h 4 * (Nat.choose (h - 4) 5 + 1)))
 
-/-- `h = 15..23`: nonpositive deficit, so `cap = 0` -/
+/-- `h = 14..23`: nonpositive deficit, so `cap = 0` (`family.py` asserts `h = 14` and lists
+`15..23`) -/
 theorem q5_nonpositive :
-    q5num 15 ≤ 0 ∧ q5num 16 ≤ 0 ∧ q5num 17 ≤ 0 ∧ q5num 18 ≤ 0 ∧ q5num 19 ≤ 0 ∧
+    q5num 14 ≤ 0 ∧ q5num 15 ≤ 0 ∧ q5num 16 ≤ 0 ∧ q5num 17 ≤ 0 ∧ q5num 18 ≤ 0 ∧ q5num 19 ≤ 0 ∧
     q5num 20 ≤ 0 ∧ q5num 21 ≤ 0 ∧ q5num 22 ≤ 0 ∧ q5num 23 ≤ 0 := by
   simp only [q5num]; norm_num [Nat.choose]
 
