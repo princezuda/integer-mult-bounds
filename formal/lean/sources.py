@@ -55,6 +55,9 @@ P8 = 'upstream/build/sections/08-assembly.tex'
 CJ = 'certificates/compact-control-layer.json'
 PJ = 'certificates/paired-network.json'
 QJ = 'certificates/parameters.json'
+NCC = 'notes/copied-centers-lemma.tex'
+SCC = 'research/swapnil-parallel/upstream/notes/copied-centres.tex'
+RV2 = 'docs/research/community-round2-review.md'
 
 
 def main_(*k):
@@ -266,6 +269,40 @@ ROWS = [
       Line(NL, 41, 41, r'At depth $j$ the remaining row count is divisible by $W^{k_0-j}$')], ''),
     ('Layout', ['reserved_axes'], 'q_F + q_B ≤ 3dG/K + 2 ≤ 6d^(1−c)G + 2',
      [Line(NL, 5, 7, r'H=dG'), Line(NL, 65, 67, r'q_F+q_B\le\frac{3dG}{K}+2\le6d^{1-c}G+2')], ''),
+    # -- CopiedCentres.lean: the copied-centre lemma -------------------------------
+    ('CopiedCentres', ['move', 'move_frame', 'move_move', 'gate_frame'], 'frame changes and pointwise gates on physical streams',
+     [Line(NCC, 23, 27, r'Changing a copy from frame $Q_1$ to $Q_2$ means applying $\mathcal F_{Q_2}\mathcal F_{Q_1}^{-1}$ to its physical stream')],
+     'The address frames are modelled as arbitrary linear equivalences.'),
+    ('CopiedCentres', ['directOld', 'directCopied', 'direct_same', 'direct_action'],
+     'direct centres: the copied word gives the same streams, y += lkx, and restores any dirty centre',
+     [Line(SCC, 14, 17, r"So the centre's frame path is $D_0\to D_1\to D_0\to D_1$"),
+      Line(SCC, 20, 23, r'The scalar action, the endpoints of every role and the restoration of arbitrary scratch are unchanged')], ''),
+    ('CopiedCentres', ['forwardOld', 'forwardCopied', 'forward_same'],
+     'retained centres, forward: copy D_U → D₀ for the reads, original D_U → D₁',
+     [Line(NCC, 45, 56, r'Keep the original at $D_U$, copy its physical stream, and transform only the copy to $D_0$, paying rank $r$')],
+     'The cleanup is an arbitrary continuation of the original stream.'),
+    ('CopiedCentres', ['reverseOld', 'reverseCopied', 'reverse_same'],
+     'retained centres, reverse: original D₀ → D_{U⊥}, copy D_{U⊥} → D₁ for the reads',
+     [Line(NCC, 58, 66, r'advance the original directly to $D_{U^\perp}=D_0\mathbin{\perp}(P\otimes U^\perp)$, paying $h-r$')], ''),
+    ('CopiedCentres', ['charge', 'finrank_sup_of_disjoint', 'Frames', 'Frames.DU', 'Frames.DUp', 'Frames.D₁',
+                       'Frames.dim_DU', 'Frames.dim_DUp', 'Frames.dim_D₁', 'Frames.nested'],
+     'the frames D_U = D₀ ⊥ (P⊗U), D₁ = A⊗F as subspaces, their dimensions and nesting',
+     [Line(NCC, 15, 22, r'Thus a local change of rank $d$ has ambient rank $d$')], ''),
+    ('CopiedCentres', ['forward_charges', 'reverse_charges'], 'rank profile z^r + z^h becomes z^r + z^(h−r), both orientations',
+     [Line(NCC, 37, 43, r'can be changed from $z^r+z^h$ to $z^r+z^{h-r}$')], ''),
+    ('CopiedCentres', ['direct_charges'], 'direct centres: three rank-h children become two',
+     [Line(SCC, 22, 24, r'Each centre then has two children of width $h$ per stage instead of three')], ''),
+    ('CopiedCentres', ['histogram_update'], 'H′₁ = H₁ + h, H′_h = H_h − h: rank mass drops by h(h−1)',
+     [Line(NCC, 79, 86, r"H'_{h,1}=H_{h,1}+h,\qquad H'_{h,h}=H_{h,h}-h")], ''),
+    ('CopiedCentres', ['rank_mass'], 's = Wm − N + L, Wm − s = N − L',
+     [Line(NCC, 92, 100, r's=Wm-N+L,\qquad Wm-s=N-L'),
+      Line(SCC, 42, 42, r'The deficit is now $Wm-s=N-L=v(v-2h^2)$')], ''),
+    ('CopiedCentres', ['selected_network'], 'the selected (23,25) network: N, L, deficit and total rank',
+     [Line(RV2, 89, 91, r'L=2,226,400; total rank=78,860,441,550; deficit Wm−s=1,846,900')], ''),
+    ('CopiedCentres', ['direct_deficit', 'retained_totals_deficit'], 'Swapnil round six: deficits at h = 25 and h = 23',
+     [Line(SCC, 42, 42, r'$Wm-s=N-L=v(v-2h^2)$'),
+      Line(SCC, 48, 49, r'so the loss per centre is $h-1$')],
+     'The h = 23 deficit equals that of lean/Round6.lean\'s bit histogram.'),
     # -- D: parameters, slacks, margins ------------------------------------
     ('CrocSwap', ['τ', 'σ', 'ε', 'c', 'lam', 'lamp', 'κ', 'β', 'δ', 'C1'], 'the chosen parameters',
      [Line(NC, 68, 68, r'\epsilon=\frac{1999}{10000},\quad c=\frac15'),
@@ -410,8 +447,8 @@ ROWS = [
      [], 'Non-vacuity check for `scoped_ceiling_exact`; no source line.'),
 ]
 
-DECL = re.compile(r'^(?:noncomputable )?(?:theorem|def) (\S+)', re.M)
-STOP = re.compile(r'^(?:theorem|def|noncomputable|/-|end |namespace|section)', re.M)
+DECL = re.compile(r'^(?:@\[[^\]]*\] )?(?:noncomputable )?(?:theorem|def|structure) (\S+)', re.M)
+STOP = re.compile(r'^(?:@\[|theorem|def|structure|noncomputable|omit|/-|end |namespace|section)', re.M)
 
 
 def lean_decls():

@@ -56,6 +56,15 @@ digit updates, and the repair permutation (`TS⁻¹` fixes good addresses, permu
 most doubles the rows, each role gets exactly `1/W` of them with the divisibility
 invariant preserved, and `q_F + q_B ≤ 6d^(1-c)G + 2`.
 
+`KappaCheck/CopiedCentres.lean` proves the copied-centre lemma in both versions:
+`notes/copied-centers-lemma.tex` (retained centres, both orientations) and Swapnil Jain's
+direct centres (`research/swapnil-parallel/upstream/notes/copied-centres.tex`). For
+arbitrary linear frames and arbitrary dirty values, the copied schedules produce exactly
+the old streams, and the centre is restored. From the subspace construction
+`D_U = D0 ⊔ (P⊗U)`, `D1 = D0 ⊔ (P⊗F)`, the rank profile changes from `z^r + z^h` to
+`z^r + z^(h-r)`. The histogram update gives `s = Wm - N + L`, and the selected (23,25)
+network's N, L, deficit and total rank are checked.
+
 Everything depends only on `propext`, `Classical.choice` and `Quot.sound`:
 no `sorry`, no `native_decide`.
 
