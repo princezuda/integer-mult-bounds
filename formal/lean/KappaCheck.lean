@@ -6,3 +6,4 @@ import KappaCheck.Frames
 import KappaCheck.Movement
 import KappaCheck.Layout
 import KappaCheck.CopiedCentres
+import KappaCheck.Selected

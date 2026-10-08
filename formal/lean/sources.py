@@ -60,6 +60,31 @@ SCC = 'research/swapnil-parallel/upstream/notes/copied-centres.tex'
 RV2 = 'docs/research/community-round2-review.md'
 
 
+ARJ = 'research/matrix-exponent-synthesis/candidate/arithmetic.json'
+CCN = 'certificates/copied-centers-network.json'
+MES = 'research/matrix-exponent-synthesis/matrix-exponent-synthesis.tex'
+BA = 'research/copied-fixed-reversed/balanced_assembly.py'
+BFM = 'scripts/experiments/binary_frame_math.py'
+NCX = 'notes/copied-centers-complex.tex'
+
+
+def J(path, *keys):
+    """Key whose Lean literal is the certificate value written as `a / b`."""
+    x = json.loads((ROOT/path).read_text())
+    for k in keys:
+        x = x[k]
+    v = Fraction(str(x))
+    return Key(path, keys, str(v.numerator) if v.denominator == 1 else f'{v.numerator} / {v.denominator}')
+
+
+def ASM(*keys):
+    return J(ARJ, 'assembly', *keys)
+
+
+SLACKS = list(json.loads((ROOT/ARJ).read_text())['assembly']['constraints'])
+MARGINS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7']
+
+
 def main_(*k):
     return ('main',)+k
 
@@ -453,6 +478,93 @@ ROWS = [
       Line(NC, 148, 148, r'The displayed witness exceeds 99\% of this upper enclosure')], ''),
     ('CrocSwap', ['witness_meets_ceiling'], 'their witness satisfies every hypothesis',
      [], 'Non-vacuity check for `scoped_ceiling_exact`; no source line.'),
+    # -- Selected.lean: main's selected witness κ = 25508460085039/5·10¹⁷ -----------
+    ('Selected', ['Φ'], 'the moment Φ(a) = (1/W) Σ_t n_t (t/m)^(1−a)',
+     [Line(MES, 63, 65, r'\Phi(a)=\frac1W\sum_{t=1}^{m-1} n_t(t/m)^{1-a}<1.')], ''),
+    ('Selected', ['P4', 'S5', 'exp_le_P4', 'S5_le_exp', 'rpow_split', 'term_le', 'le_term',
+                  'moment_lt_one', 'one_lt_moment'],
+     'exp bounds and the termwise reduction (t/m)^(1−a) = (t/m)·exp(a·log(m/t))',
+     [Line(BFM, 82, 83, 'upper += weight*(1+v+v*v/(2*(1-v/3)))')],
+     'Lean bounds exp by `Real.exp_bound\'` (four terms), which is below the script\'s Padé form.'),
+    ('Selected', ['log_list', 'log_16_15', 'log_25_24', 'log_81_80', 'log_126_125', 'log_176_175',
+                  'log_351_350', 'log_715_714', 'log_343_342', 'log_576_575', 'log_481_480'],
+     'logarithms: log(n/(n−1)) by `neglog_bounds`, and log of a product of their powers',
+     [Line(BFM, 53, 63, 'z = (y-1)/(y+1)')],
+     'A different series from the script\'s; every log(m/t) is an integer combination of these ten.'),
+    ('Selected', ['aB', 'aC'], 'the savings a_b and a_c = 717/10⁷',
+     [Line(MES, 186, 186, r'a_b=\frac{102039046058023}{2000000000000000000}'),
+      Line(NCX, 100, 100, r'With $a_c=717/10^7$, $\sigma=1-a_c$'),
+      J(ARJ, 'bit_saving'), J(CCN, 'complex', 'saving')], ''),
+    ('Selected', ['bitRows', 'cxRows'], 'the child histograms (t, n_t)',
+     [Line(MES, 180, 182, r'Its physical width is 137,151,806 and total rank 78,860,441,550'),
+      Line(NCX, 89, 96, r'\text{auxiliary exterior}&2B_c&756')],
+     '`arithmetic.json` `source_profile.child_multiplicities` and `copied-centers-network.json` '
+     '`complex.child_width_multiplicities`; `gen_selected.py --check` ties them to the JSON.'),
+    ('Selected', ['bitHlo', 'bitHhi', 'bitU', 'bitD', 'cxHlo', 'cxHhi', 'cxU', 'cxD', 'bit_logs', 'cx_logs',
+                  'bit_hints', 'cx_hints'],
+     'per-row enclosures of log(m/t) and of exp, all rechecked in Lean', [],
+     'Proof hints computed by `gen_selected.py`; no source line.'),
+    ('Selected', ['bit_moment'], 'Φ_b(a_b) < 1 as a real inequality',
+     [Line(MES, 63, 65, r'n_t(t/m)^{1-a}<1'), Line(MES, 183, 187, r'Finer rational moment certification')], ''),
+    ('Selected', ['cx_moment'], 'Φ_c(a_c) < 1 as a real inequality',
+     [Line(NCX, 103, 106, r'\frac{\sum_tn_tt^\sigma}{W_cm_c^\sigma}')], ''),
+    ('Selected', ['bit_moment_tight', 'cx_moment_tight'],
+     'negative controls: Φ_b(a_b + 10⁻¹⁶) > 1 and Φ_c(a_c + 10⁻⁷) > 1', [],
+     'Shows each moment test is tight; no source line.'),
+    ('Selected', ['IsHalvingDegree', 'bit_halving', 'cx_halving'], 'halving degrees 9 and 20',
+     [Line(BA, 44, 49, 'while m**degree <= 2 * child**degree:'),
+      J(ARJ, 'finite_bridge', 'bit', 'halving_degree'), J(ARJ, 'finite_bridge', 'complex', 'halving_degree')], ''),
+    ('Selected', ['wire_bits'], 'role bit lengths 28 and 30; largest children 529 and 756',
+     [Line(BA, 63, 63, 'W.bit_length()'), J(ARJ, 'finite_bridge', 'bit', 'maxchild'),
+      J(ARJ, 'finite_bridge', 'complex', 'maxchild')], ''),
+    ('Selected', ['rank_mass'], 'Σ t n_t = s: s_b = Wm − N + L and s_c',
+     [Line(MES, 182, 182, r'total rank 78,860,441,550'),
+      Line(NCX, 84, 84, r's_c=W_cm_c-N_c+L_c&=421548223824'), J(ARJ, 'finite_bridge', 'complex', 's')], ''),
+    ('Selected', ['mC', 'WC', 'childC', 'sC', 'scalar', 'E', 'Bs', 'literal', 'C0', 'inductionGap',
+                  'coefficient', 'degree', 'degreeGap'],
+     'the finite-bridge constants and their formulas',
+     [Line(BA, 72, 78, 'E = 64*(W+m+scalar+1)**3'), Line(BA, 87, 90, 'gap = degree-Q(51,25)*coefficient'),
+      J(ARJ, 'finite_bridge', 'complex', 'scalar_group_upper'), J(ARJ, 'finite_bridge', 'rows', 'degree')],
+     '`scalar_group_upper` is supplied by the producer, as in the script.'),
+    ('Selected', ['semantic_values'], 'semantic and row constants, with the script\'s requirements',
+     [Line(BA, 79, 80, 'require(E > literal and semantic'),
+      J(ARJ, 'finite_bridge', 'semantic', 'E'), J(ARJ, 'finite_bridge', 'semantic', 'B'),
+      J(ARJ, 'finite_bridge', 'semantic', 'literal_charge'), J(ARJ, 'finite_bridge', 'semantic', 'C0'),
+      J(ARJ, 'finite_bridge', 'semantic', 'strict_literal_gap'),
+      J(ARJ, 'finite_bridge', 'semantic', 'induction_gap'),
+      J(ARJ, 'finite_bridge', 'rows', 'coefficient'), J(ARJ, 'finite_bridge', 'rows', 'degree_gap')], ''),
+    ('Selected', ['κ', 'β', 'hB'], 'κ, β = 1/20 and the backoff h = 10⁻¹⁸',
+     [Line(MES, 186, 190, r'\kappa=\frac{25508460085039}{500000000000000000}'),
+      J(ARJ, 'kappa'), ASM('parameters', 'beta'), J(ARJ, 'h_backoff')], ''),
+    ('Selected', ['τ', 'σ', 'q', 'lp', 'c', 'ε', 'lam', 'G', 'r', 'δ', 'C1'], 'the balanced parameters',
+     [Line(BA, 112, 119, 'lp, c, eps = 1-q, q+h/4, (1-h)/(1+q)')], ''),
+    ('Selected', ['internal', 'leaf'], 'the recurrence exponents',
+     [Line(BA, 126, 127, 'internal = tau+(1-beta)*max(sigma-tau,Q(0))')], ''),
+    ('Selected', MARGINS + ['margins'], 'the seven margins',
+     [Line(BA, 120, 121, 'margins = dict(g1=1-eps, g2=a, g3=G, g4=a,')], ''),
+    ('Selected', ['slacks', 'slacks_length'], 'the 47 slacks, by name and formula',
+     [Line(BA, 128, 146, 'slacks = dict(a_positive=a, a_below_b=b-a')], ''),
+    ('Selected', ['parameter_values'], 'every parameter equals the certificate\'s value',
+     [ASM('parameters', k) for k in ('tau', 'sigma', 'q', 'c', 'epsilon', 'lambda_', 'lambda_prime',
+                                    'alpha_squared_power', 'delta', 'kappa')], ''),
+    ('Selected', ['slack_values'], 'every slack equals the certificate\'s value',
+     [ASM('constraints', k) for k in SLACKS], ''),
+    ('Selected', ['margin_values'], 'every margin equals the certificate\'s value',
+     [ASM('margins', k) for k in MARGINS], ''),
+    ('Selected', ['slacks_pos'], 'all 47 slacks are positive',
+     [Line(BA, 147, 148, 'failed = {name:str(value) for name,value in slacks.items() if value <= 0}')], ''),
+    ('Selected', ['kappa_below_margins'], 'the minimum margin is G = εq, and κ < G',
+     [Line(BA, 149, 149, "require(min(margins.values()) == G, 'unexpected controlling margin')")], ''),
+    ('Selected', ['balanced_identities'], '1 − ε − G = h, 1 − ε − r = h/2, 1 − ε(1+c) = h − εh/4',
+     [Line(BA, 150, 151, "require(1-eps-G == h and 1-eps-r == h/2")], ''),
+    ('Selected', ['kappa_facts'], 'κ beats the published witness and its old scoped limit; κ < a_b/(1+a_b); 2⁻¹⁵ < κ',
+     [Line(MES, 192, 194, r'the new value exceeds the old scoped limit'),
+      Line(BA, 156, 156, 'absorption_gap=G-kappa,scoped_limit=a/(1+a)'),
+      J(ARJ, 'comparison', 'old_published_kappa'), J(ARJ, 'comparison', 'old_formal_scoped_limit'),
+      ASM('scoped_limit'), ASM('absorption_gap')],
+     'Negative control: κ + 2·10⁻¹⁸ (the next grid value) exceeds G.'),
+    ('Selected', ['selected_certificate'], 'both moments, all 47 slacks and κ below every margin',
+     [Line('README.md', 32, 35, 'The seven final exponent margins are strictly positive.')], ''),
 ]
 
 DECL = re.compile(r'^(?:@\[[^\]]*\] )?(?:noncomputable )?(?:theorem|def|structure) (\S+)', re.M)
@@ -502,7 +614,7 @@ def check():
                 errors.append(f'{module}.{name}: not found in Lean sources')
         for ref in refs:
             if isinstance(ref, Line):
-                lines = (ROOT/ref.path).read_text().split('\n')
+                lines = (ROOT/ref.path).read_bytes().decode().split('\n')  # '\n' only, as GitHub counts
                 if not 1 <= ref.first <= ref.last <= len(lines):
                     errors.append(f'{ref.path}:{ref.first}-{ref.last}: out of range')
                 elif norm(ref.anchor) not in norm(' '.join(lines[ref.first-1:ref.last])):
