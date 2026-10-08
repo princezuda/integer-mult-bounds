@@ -9,6 +9,9 @@ import PRChecksB
 #print axioms PRChecksB.neglog_bounds
 #print axioms PRChecksB.log_21952
 #print axioms PRChecksB.log_21952_lt_10
+#print axioms PRChecksB.log_125000_gt
+#print axioms PRChecksB.log_prod
+#print axioms PRChecksB.certified_saving_le
 #print axioms PRChecksB.ceiling_half
 #print axioms PRChecksB.min_g3_g4_le
 #print axioms PRChecksB.ceiling_fifth
@@ -25,7 +28,14 @@ import PRChecksB
 #print axioms PRChecksB.PR5.guard_constants
 #print axioms PRChecksB.PR5.fast_gaussian_repeats
 #print axioms PRChecksB.PR5.saving_ratio
+#print axioms PRChecksB.PR5.bit_counts
+#print axioms PRChecksB.PR5.bit_eta
+#print axioms PRChecksB.PR5.bit_deficit_slack
+#print axioms PRChecksB.PR5.bit_log
+#print axioms PRChecksB.PR5.bit_exponent
+#print axioms PRChecksB.PR5.bit_exponent_29643
 #print axioms PRChecksB.PR5.Base59.parameter_origin
+#print axioms PRChecksB.PR5.Base59.exponents_certified
 #print axioms PRChecksB.PR5.Base59.recurrence_values
 #print axioms PRChecksB.PR5.Base59.slack_values
 #print axioms PRChecksB.PR5.Base59.constraint_slacks
@@ -34,6 +44,8 @@ import PRChecksB
 #print axioms PRChecksB.PR5.Base59.note_lines
 #print axioms PRChecksB.PR5.Base59.scoped_ceiling
 #print axioms PRChecksB.PR5.Fast.parameter_origin
+#print axioms PRChecksB.PR5.Fast.exponents_certified
+#print axioms PRChecksB.PR5.Fast.fast_ok
 #print axioms PRChecksB.PR5.Fast.recurrence_values
 #print axioms PRChecksB.PR5.Fast.slack_values
 #print axioms PRChecksB.PR5.Fast.constraint_slacks
@@ -47,6 +59,10 @@ import PRChecksB
 #print axioms PRChecksB.PR5.Fast.leaf_iff
 #print axioms PRChecksB.PR5.Fast.original_complex_infeasible
 #print axioms PRChecksB.PR5.Fast.compressed_complex_feasible
+#print axioms PRChecksB.PR5.Certified.Pw_tau_certified
+#print axioms PRChecksB.PR5.Certified.fixed_tau_ceiling_beaten
+#print axioms PRChecksB.PR5.Certified.certified_ceiling
+#print axioms PRChecksB.PR5.Certified.certified_ceiling_attained
 #print axioms PRChecksB.PR5Analytic.chirp_square
 #print axioms PRChecksB.PR5Analytic.chirp_split
 #print axioms PRChecksB.PR5Analytic.step_cost
@@ -96,8 +112,10 @@ import PRChecksB
 #print axioms PRChecksB.PR6.log_m
 #print axioms PRChecksB.PR6.log_enclosure_hi_lt
 #print axioms PRChecksB.PR6.bit_exponent
+#print axioms PRChecksB.PR6.bit_exponent_325018
 #print axioms PRChecksB.PR6.guard_constants
 #print axioms PRChecksB.PR6.parameter_origin
+#print axioms PRChecksB.PR6.exponents_certified
 #print axioms PRChecksB.PR6.recurrence_values
 #print axioms PRChecksB.PR6.slack_values
 #print axioms PRChecksB.PR6.constraint_slacks
@@ -108,6 +126,10 @@ import PRChecksB
 #print axioms PRChecksB.PR6.scoped_ceiling
 #print axioms PRChecksB.PR6.g4_exceeds_a_min
 #print axioms PRChecksB.PR6.window_size
+#print axioms PRChecksB.PR6.Certified.Pw_tau_certified
+#print axioms PRChecksB.PR6.Certified.fixed_tau_ceiling_beaten
+#print axioms PRChecksB.PR6.Certified.certified_ceiling
+#print axioms PRChecksB.PR6.Certified.certified_ceiling_attained
 #print axioms PRChecksB.PR7.v_eq
 #print axioms PRChecksB.PR7.c2_eq
 #print axioms PRChecksB.PR7.bit_counts
@@ -125,6 +147,7 @@ import PRChecksB
 #print axioms PRChecksB.PR7.complex_gates
 #print axioms PRChecksB.PR7.guard_constants
 #print axioms PRChecksB.PR7.parameter_origin
+#print axioms PRChecksB.PR7.exponents_certified
 #print axioms PRChecksB.PR7.recurrence_values
 #print axioms PRChecksB.PR7.slack_values
 #print axioms PRChecksB.PR7.constraint_slacks
